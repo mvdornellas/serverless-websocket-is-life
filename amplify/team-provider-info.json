@@ -10,14 +10,6 @@
             "StackName": "amplify-serverlesswebsocket-dev-155658",
             "StackId": "arn:aws:cloudformation:us-east-2:192380121082:stack/amplify-serverlesswebsocket-dev-155658/47885a00-8a4b-11ea-986b-0a569e9f7d94",
             "AmplifyAppId": "dfmcbomk9cm90"
-        },
-        "categories": {
-            "hosting": {
-                "amplifyhosting": {
-                    "appId": "dfmcbomk9cm90",
-                    "type": "manual"
-                }
-            }
         }
     }
 }
