@@ -55,7 +55,8 @@ resources:
   Resources:
     ChatConnectionsTable:
       Type: AWS::DynamoDB::Table
-      Properties:
+      Properties: 
+        TableName: ChatConnections
         AttributeDefinitions:
           - AttributeName: connectionId
             AttributeType: S
