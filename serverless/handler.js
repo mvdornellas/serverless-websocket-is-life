@@ -70,7 +70,7 @@ module.exports.sendMessage = async (event, context, callback) => {
 };
 
 const send = (event, connectionId) => {
-  const postData = JSON.parse(event.body).data;
+  const postData = JSON.parse(event.body);
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
     apiVersion: "2018-11-29",
     endpoint: event.requestContext.domainName + "/" + event.requestContext.stage

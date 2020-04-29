@@ -60,6 +60,8 @@ resources:
         AttributeDefinitions:
           - AttributeName: connectionId
             AttributeType: S
+          - AttributeName: name
+            AtributeType: S
         KeySchema:
           - AttributeName: connectionId
             KeyType: HASH
