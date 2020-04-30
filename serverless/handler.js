@@ -7,7 +7,7 @@ require("aws-sdk/clients/apigatewaymanagementapi");
 
 const successfullResponse = {
   statusCode: 200,
-  body: "Connected"
+  body: "Connected",
 };
 
 module.exports.connectionManager = (event, context, callback) => {
@@ -16,7 +16,7 @@ module.exports.connectionManager = (event, context, callback) => {
       .then(() => {
         callback(null, successfullResponse);
       })
-      .catch(err => {
+      .catch((err) => {
         callback(null, JSON.stringify(err));
       });
   } else if (event.requestContext.eventType === "DISCONNECT") {
@@ -24,10 +24,10 @@ module.exports.connectionManager = (event, context, callback) => {
       .then(() => {
         callback(null, successfullResponse);
       })
-      .catch(err => {
+      .catch((err) => {
         callback(null, {
           statusCode: 500,
-          body: "Failed to connect: " + JSON.stringify(err)
+          body: "Failed to connect: " + JSON.stringify(err),
         });
       });
   }
@@ -38,11 +38,12 @@ module.exports.defaultMessage = (event, context, callback) => {
 };
 
 module.exports.sendMessage = async (event, context, callback) => {
+  const currenConnectionId = event.requestContext.connectionId;
   let connectionData;
   try {
     connectionData = await DDB.scan({
       TableName: process.env.CHATCONNECTION_TABLE,
-      ProjectionExpression: "connectionId"
+      ProjectionExpression: "connectionId",
     }).promise();
   } catch (err) {
     console.log(err);
@@ -69,34 +70,82 @@ module.exports.sendMessage = async (event, context, callback) => {
   callback(null, successfullResponse);
 };
 
+module.exports.addNewUser = async (event, context, callback) => {
+  try {
+    const currentConnectionId = event.requestContext.connectionId;
+    const postData = JSON.parse(event.body);
+    const username = postData.username;
+    var params = {
+      Key: {
+        connectionId: {
+          S: `${currentConnectionId}`,
+        },
+        username: {
+          S: `${username}`,
+        },
+      },
+      TableName: process.env.CHATCONNECTION_TABLE,
+    };
+
+    await DDB.putItem(params).promise();
+
+    const connectionData = await DDB.scan({
+      TableName: process.env.CHATCONNECTION_TABLE,
+      ProjectionExpression: "connectionId",
+    }).promise();
+
+    const users = connectionData.Items
+    // .filter(
+    //   ({ connectionId }) => connectionId !== currentConnectionId
+    // );
+
+    users.map(async ({ connectionId }) => {
+      try {
+        return await send(event, connectionId.S);
+      } catch (err) {
+        if (err.statusCode === 410) {
+          return await deleteConnection(connectionId.S);
+        }
+        console.log(JSON.stringify(err));
+        throw err;
+      }
+    });
+
+    callback(null, successfullResponse);
+  } catch (err) {
+    callback(null, JSON.stringify(err));
+  }
+};
+
 const send = (event, connectionId) => {
   const postData = JSON.parse(event.body);
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
     apiVersion: "2018-11-29",
-    endpoint: event.requestContext.domainName + "/" + event.requestContext.stage
+    endpoint:
+      event.requestContext.domainName + "/" + event.requestContext.stage,
   });
   return apigwManagementApi
     .postToConnection({ ConnectionId: connectionId, Data: postData })
     .promise();
 };
 
-const addConnection = connectionId => {
+const addConnection = (connectionId) => {
   const putParams = {
     TableName: process.env.CHATCONNECTION_TABLE,
     Item: {
-      connectionId: { S: connectionId }
-    }
+      connectionId: { S: connectionId },
+    },
   };
 
   return DDB.putItem(putParams).promise();
 };
 
-const deleteConnection = connectionId => {
+const deleteConnection = (connectionId) => {
   const deleteParams = {
     TableName: process.env.CHATCONNECTION_TABLE,
     Key: {
-      connectionId: { S: connectionId }
-    }
+      connectionId: { S: connectionId },
+    },
   };
 
   return DDB.deleteItem(deleteParams).promise();

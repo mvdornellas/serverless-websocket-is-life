@@ -51,20 +51,27 @@ functions:
     events:
       - websocket:
           route: sendMessage
+  addNewUser:
+    handler: handler.addNewUser
+    events:
+      - websocket:
+          route: addNewUser
 resources:
   Resources:
     ChatConnectionsTable:
       Type: AWS::DynamoDB::Table
       Properties: 
-        TableName: ChatConnections
+        TableName: ChatConnectionsTable
         AttributeDefinitions:
           - AttributeName: connectionId
             AttributeType: S
-          - AttributeName: name
-            AtributeType: S
+          - AttributeName: username
+            AttributeType: S
         KeySchema:
           - AttributeName: connectionId
             KeyType: HASH
+          - AttributeName: username
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
